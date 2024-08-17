@@ -153,16 +153,16 @@ def __(
 ):
     # Concat all 3 dataframes
 
-    all_years = pd.concat([by_year_1936_1995, by_year_1995_2000, by_year_2000_2023])
-    all_years
+    miles_driven_all_years = pd.concat([by_year_1936_1995, by_year_1995_2000, by_year_2000_2023])
+    miles_driven_all_years
 
     # make a time series chart using sns
 
     plt.figure(figsize=(12, 6))
     plt.figure(figsize=(16, 6))
-    sns.lineplot(data=all_years, x='year', y='vmt')
-    sns.lineplot(data=all_years, x='year', y='vmt')
-    return all_years,
+    sns.lineplot(data=miles_driven_all_years, x='year', y='vmt')
+    sns.lineplot(data=miles_driven_all_years, x='year', y='vmt')
+    return miles_driven_all_years,
 
 
 @app.cell
@@ -190,52 +190,37 @@ def __(pd):
 
 @app.cell
 def __(mo):
-    mo.md(r"""# C. Export miles driven per capita""")
+    mo.md(
+        r"""
+        # C. Gas prices (inflation adjusted)
+
+        Solving this requires 2 things: 
+
+        1. deciding what definition/classification of petrol we're using. eg probably not "spot" (ie the price the buyer pays on spot before being shipped to a local market). Probably somethign like "gas pump price" or "retail gas prices". Ideally, I'm looking for as to close to the typical *consumer* pays as possible.
+        2. There's no source for 1930s-present, so I'll have to stitch together multiple (and unfortuantley it seems early data is less detailed)
+
+        ### Data sources available
+
+        - [1929-2015 "Average Historical Annual Gasoline Pump Price"](https://www.energy.gov/eere/vehicles/fact-915-march-7-2016-average-historical-annual-gasoline-pump-price-1929-2015): energy.gov published a fun little "fact" report, which links to a Excel sheet with the data.
+        - [1994-2023 "U.S. All Grades All Formulations Retail Gasoline Prices"](https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=pet&s=emm_epm0_pte_nus_dpg&f=a): from the Energy Information Administration website.
+        """
+    )
     return
 
 
 @app.cell
-def __():
+def __(mo):
+    mo.md(r"""# D. put it all into one cute lil' dataframe""")
     return
 
 
 @app.cell
-def __():
-    return
+def __(annual_population, miles_driven_all_years):
+    miles_driven_all_years.merge(
+        annual_population,
+        on="year"
+    )
 
-
-@app.cell
-def __():
-    return
-
-
-@app.cell
-def __():
-    return
-
-
-@app.cell
-def __():
-    return
-
-
-@app.cell
-def __():
-    return
-
-
-@app.cell
-def __():
-    return
-
-
-@app.cell
-def __():
-    return
-
-
-@app.cell
-def __():
     return
 
 

@@ -239,7 +239,7 @@ def __(pd):
 @app.cell
 def __(pd):
     by_month_2000_2024 = pd.read_csv(
-        'data/Vehicle miles traveled 2000-May 2024 -- fhwa - 24maytvt > SAVMT.csv',
+        'https://raw.githubusercontent.com/davidnmora/energy-data/main/data/Vehicle%20miles%20traveled%202000-May%202024%20--%20fhwa%20-%2024maytvt%20%3E%20SAVMT.csv',
         thousands=','
     )
 
@@ -297,7 +297,7 @@ def __(mo):
 
 @app.cell
 def __(pd):
-    annual_population = pd.read_csv("data/us_annual_population_1936_2023.csv")
+    annual_population = pd.read_csv("https://raw.githubusercontent.com/davidnmora/energy-data/main/data/us_annual_population_1936_2023.csv")
     annual_population['year'] = annual_population['date'].apply(lambda x: int(x.split('-')[0]))
     annual_population = annual_population[['year', 'population']]
     annual_population
@@ -333,14 +333,14 @@ def __(mo):
 
 @app.cell
 def __(pd):
-    gas_price_1929_2015 = pd.read_csv("data/US Average Annual Gasoline Pump Price, 1929 - 2015.csv")
+    gas_price_1929_2015 = pd.read_csv("https://raw.githubusercontent.com/davidnmora/energy-data/main/data/US%20Average%20Annual%20Gasoline%20Pump%20Price%2C%201929%20-%202015.csv")
     gas_price_1929_2015
     return gas_price_1929_2015,
 
 
 @app.cell
 def __(pd):
-    gas_price_1994_2023 = pd.read_csv('data/U.S._All_Grades_All_Formulations_Retail_Gasoline_Prices.csv').rename(columns={"Year": "year"})
+    gas_price_1994_2023 = pd.read_csv('https://raw.githubusercontent.com/davidnmora/energy-data/main/data/U.S._All_Grades_All_Formulations_Retail_Gasoline_Prices.csv').rename(columns={"Year": "year"})
     gas_price_1994_2023['year'] = gas_price_1994_2023['year'].apply(lambda year: int(year))
     gas_price_1994_2023
     return gas_price_1994_2023,

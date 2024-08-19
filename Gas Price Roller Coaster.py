@@ -7,6 +7,7 @@ app = marimo.App(width="medium", app_title="Gas price roller coaster")
 @app.cell
 def __():
     import marimo as mo
+
     import pandas as pd
     import numpy as np
 
@@ -22,9 +23,16 @@ def __():
 def __(mo):
     mo.md(
         r"""
-        # How has average miles driven per capita varied alongside retail gasoline price in the US?
+        # How have American driving habits varied alongside retail gas prices?
 
         Inspired by this 2010 NYTimes connected scatter plot, *[Driving Shifts into Reverse](https://archive.nytimes.com/www.nytimes.com/imagepages/2010/05/02/business/02metrics.html)*.
+
+        ### Data sources
+
+        I couldn't find any single, comprehensive data sources, so I stitched each metric together from several different sources (see [this notebook for more details](https://github.com/davidnmora/energy-data/blob/main/Derive%20US%20miles%20driven%20per%20capita%20vs%20gas%20price.py)): 
+
+        - Driving distance per capita measures *all motor vehicles* accross public roads, as published by the Federal Highway Administration
+        - Gas prices are inflation adjusted to match contemporary USD value
         """
     )
     return
@@ -32,7 +40,7 @@ def __(mo):
 
 @app.cell
 def __(pd):
-    miles_driven_per_capita_and_gas_price = pd.read_csv('data/derived-data/miles_driven_per_capita_and_gas_price.csv')
+    miles_driven_per_capita_and_gas_price = pd.read_csv('https://raw.githubusercontent.com/davidnmora/energy-data/main/data/derived-data/miles_driven_per_capita_and_gas_price.csv')
     return miles_driven_per_capita_and_gas_price,
 
 
@@ -112,13 +120,10 @@ def __(
 
 
 @app.cell
-def __():
-    return
-
-
-@app.cell
-def __():
-    return
+def __(miles_driven_per_capita_and_gas_price):
+    xlim = [miles_driven_per_capita_and_gas_price["miles driven per capita"].min(), miles_driven_per_capita_and_gas_price["miles driven per capita"].max()]
+    ylim = [miles_driven_per_capita_and_gas_price["inflation adjusted gas price"].min(), miles_driven_per_capita_and_gas_price["inflation adjusted gas price"].max()]
+    return xlim, ylim
 
 
 if __name__ == "__main__":

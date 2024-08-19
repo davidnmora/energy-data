@@ -31,7 +31,6 @@ def __(miles_driven_per_capita_and_gas_price, mo):
 
 @app.cell
 def __(
-    format_year,
     functools,
     max_year,
     miles_driven_per_capita_and_gas_price,
@@ -40,6 +39,9 @@ def __(
     xlim,
     ylim,
 ):
+    def format_year(year):
+        return "'" + f'{year}'[-2:]
+
     @functools.cache
     def draw_connected_scatter_plot(min, max):
         full_df = miles_driven_per_capita_and_gas_price
@@ -86,14 +88,7 @@ def __(
 
 
     draw_connected_scatter_plot(max_year.value[0], max_year.value[1])
-    return draw_connected_scatter_plot,
-
-
-@app.cell
-def __():
-    def format_year(year):
-        return "'" + f'{year}'[-2:]
-    return format_year,
+    return draw_connected_scatter_plot, format_year
 
 
 @app.cell
@@ -415,6 +410,12 @@ def __(
     miles_driven_per_capita_and_gas_price = miles_driven_per_capita_and_gas_price.sort_values(by="year") # required for viz
     miles_driven_per_capita_and_gas_price
     return miles_driven_per_capita_and_gas_price,
+
+
+@app.cell
+def __():
+    # miles_driven_per_capita_and_gas_price.to_csv('data/derived-data/miles_driven_per_capita_and_gas_price.csv', index=False)
+    return
 
 
 if __name__ == "__main__":

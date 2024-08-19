@@ -154,7 +154,7 @@ def __(
     # Concat all 3 dataframes
 
     miles_driven_all_years = pd.concat([by_year_1936_1995, by_year_1995_2000, by_year_2000_2023])
-    miles_driven_all_years
+    miles_driven_all_years['year'] = miles_driven_all_years.year.apply(lambda year: int(year))
 
     # make a time series chart using sns
 
@@ -169,7 +169,7 @@ def __(
 def __(mo):
     mo.md(
         r"""
-        # B. US population by year
+        # B. US population by year (NOTE: population is in thousands, so multiply by 1,000)
 
         There's a lot of sources, not too many complete ones.
 
@@ -196,16 +196,134 @@ def __(mo):
 
         Solving this requires 2 things: 
 
-        1. deciding what definition/classification of petrol we're using. eg probably not "spot" (ie the price the buyer pays on spot before being shipped to a local market). Probably somethign like "gas pump price" or "retail gas prices". Ideally, I'm looking for as to close to the typical *consumer* pays as possible.
-        2. There's no source for 1930s-present, so I'll have to stitch together multiple (and unfortuantley it seems early data is less detailed)
+        1. There are a lot of forms of gas (from crude to deisel). I want something close to "gas pump price" or "retail gas prices". I'm looking for as to close to the typical *consumer* pays as possible.
+        2. There's no *single* source for 1930s-present, so I'll have to stitch together multiple.
 
         ### Data sources available
 
-        - [1929-2015 "Average Historical Annual Gasoline Pump Price"](https://www.energy.gov/eere/vehicles/fact-915-march-7-2016-average-historical-annual-gasoline-pump-price-1929-2015): energy.gov published a fun little "fact" report, which links to a Excel sheet with the data.
-        - [1994-2023 "U.S. All Grades All Formulations Retail Gasoline Prices"](https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=pet&s=emm_epm0_pte_nus_dpg&f=a): from the Energy Information Administration website.
+        - [1929-2015 "Average Historical Annual Gasoline Pump Price" excel spreadsheet](https://www.energy.gov/eere/vehicles/articles/fact-915-march-7-2016-average-historical-annual-gasoline-pump-price-1929): energy.gov published a fun little "fact" report, which weirdly seems to be the easiest place to cleanly get this big range of annual data.
+        - [1994-2023 "U.S. All Grades All Formulations Retail Gasoline Prices"](https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=pet&s=emm_epm0_pte_nus_dpg&f=a): from the Energy Information Administration website. DOUBT: do we really want *all formulations* mushed together? I feel like that's not exactly "gasoline pump price", is it?
+        - [1992 - 2023 "Regular conventional gasoline prices"](https://www.eia.gov/petroleum/gasdiesel/): comes straight from eia.gov data portal... so, better?
         """
     )
     return
+
+
+@app.cell
+def __(mo):
+    mo.md(r"""### Import possible data sources""")
+    return
+
+
+@app.cell
+def __(pd):
+    gas_price_1929_2015 = pd.read_csv("data/US Average Annual Gasoline Pump Price, 1929 - 2015.csv")
+    gas_price_1929_2015
+    return gas_price_1929_2015,
+
+
+@app.cell
+def __(pd):
+    gas_price_1994_2023 = pd.read_csv('data/U.S._All_Grades_All_Formulations_Retail_Gasoline_Prices.csv').rename(columns={"Year": "year"})
+    gas_price_1994_2023
+    return gas_price_1994_2023,
+
+
+@app.cell
+def __(pd):
+    gas_prices_1992_2023 = pd.read_csv('data/Weekly U.S. Regular Conventional Retail Gasoline Prices  (Dollars per Gallon).csv')
+    gas_prices_1992_2023
+
+    gas_prices_1992_2023['year'] = gas_prices_1992_2023['Date'].apply(lambda x: int(x.split(', ')[1]))
+
+    # aggregate on year
+    gas_prices_1992_2023 = gas_prices_1992_2023.groupby('year').agg({'Weekly U.S. Regular Conventional Retail Gasoline Prices  (Dollars per Gallon)': 'mean'}).reset_index()
+
+    gas_prices_1992_2023
+    return gas_prices_1992_2023,
+
+
+@app.cell
+def __(mo):
+    mo.md(
+        r"""
+        ## Comparing the dataset we could use to extend to 2023, "Regular conventional retail" seems to differ least in the timeframe it overlaps with the 1929-2015... so, it's best? But... is it actually a good approximation? 
+
+        At most, it seems off by 7 cents. I think this is accurate enough. Our chart's resolution and datasets variance means we're mostly just reacting to changes >20 cents, so this should be fine. I guess...
+        """
+    )
+    return
+
+
+@app.cell
+def __(
+    gas_price_1929_2015,
+    gas_price_1994_2023,
+    gas_prices_1992_2023,
+    plt,
+    sns,
+):
+    # merge all 3 gas price datasets on year (inner join, ie just keep where they all overlap)
+    merged = gas_price_1929_2015.merge(
+        gas_price_1994_2023,
+        on="year",
+        how="inner"
+    ).merge(
+        gas_prices_1992_2023,
+        on="year",
+        how="inner"
+    )
+    merged
+    merged['a - b'] = merged['unajusted retail gas price'] - merged['All Grades All Formulations Retail Gasoline Price']
+    merged['a - c'] = merged['unajusted retail gas price'] - merged['Weekly U.S. Regular Conventional Retail Gasoline Prices  (Dollars per Gallon)']
+
+    merged['a - b'] = merged['a - b'].apply(lambda difference: abs(difference))
+    merged['a - c'] = merged['a - c'].apply(lambda difference: abs(difference))
+
+    # plot bot a - b and a - c columns next to each other, to see how they compare:
+    plt.figure(figsize=(12, 6))
+    sns.lineplot(data=merged, x='year', y='a - b', label="a - b (ie 'All Grades All Formulations Retail'")
+    sns.lineplot(data=merged, x='year', y='a - c', label="a - c, ie 'Weekly U.S. Regular Conventional Retail'")
+    return merged,
+
+
+@app.cell
+def __(mo):
+    mo.md(r"""### Create a unified gas price dataset, then adjust for inflation""")
+    return
+
+
+@app.cell
+def __(gas_price_1929_2015, gas_prices_1992_2023, pd):
+    gas_price_1929_2023 = pd.concat([
+        gas_price_1929_2015,
+        gas_prices_1992_2023[
+            (gas_prices_1992_2023.year > 2015) &
+            (gas_prices_1992_2023.year < 2024) # not a full year
+        ].rename(columns={'Weekly U.S. Regular Conventional Retail Gasoline Prices  (Dollars per Gallon)': 'unajusted retail gas price'})
+    ])
+
+    gas_price_1929_2023.plot(x='year', y='unajusted retail gas price')
+    return gas_price_1929_2023,
+
+
+@app.cell
+def __(gas_price_1929_2023):
+    import cpi
+
+    cpi.inflate(100, 1913)
+
+    inflation_adjusted_gas_price = gas_price_1929_2023.copy().rename(columns={
+        'unajusted retail gas price': 'raw gas price',
+    })
+
+    inflation_adjusted_gas_price['inflation adjusted gas price'] = inflation_adjusted_gas_price.apply(
+        lambda row: cpi.inflate(round(row['raw gas price'], 2), int(row['year'])),
+        axis=1
+    )
+
+    inflation_adjusted_gas_price.plot(x='year', y=['raw gas price', 'inflation adjusted gas price'])
+    return cpi, inflation_adjusted_gas_price
 
 
 @app.cell
@@ -215,13 +333,89 @@ def __(mo):
 
 
 @app.cell
-def __(annual_population, miles_driven_all_years):
-    miles_driven_all_years.merge(
+def __(
+    annual_population,
+    inflation_adjusted_gas_price,
+    miles_driven_all_years,
+):
+    miles_driven_per_capita_and_gas_price = miles_driven_all_years.merge(
         annual_population,
-        on="year"
+        on="year",
+        how="inner"
+    ).merge(
+        inflation_adjusted_gas_price,
+        on="year",
+        how="inner"
     )
 
-    return
+    # NOTE: vmt is in millions, and popuation is in thousands, so to get actual value we can just multiply the quotient by 1,000
+    miles_driven_per_capita_and_gas_price['miles driven per capita'] = 1000 * miles_driven_per_capita_and_gas_price['vmt'] / miles_driven_per_capita_and_gas_price['population']
+
+
+    miles_driven_per_capita_and_gas_price
+    return miles_driven_per_capita_and_gas_price,
+
+
+@app.cell
+def __(max_year, miles_driven_per_capita_and_gas_price, plt, sns):
+    def draw_connected_scatter_plot(df, full_df):
+        # Sort the dataframe by year
+        df = df.sort_values(by="year")
+
+        # Create the scatter plot
+        plt.figure(figsize=(10, 6))
+        scatter_plot = sns.scatterplot(
+            data=df,
+            x="miles driven per capita",
+            y="inflation adjusted gas price"
+        )
+
+        # Add lines connecting the points
+        plt.plot(
+            df["miles driven per capita"],
+            df["inflation adjusted gas price"],
+            linestyle='-', 
+            marker='o'
+        )
+
+        # Set the x-axis and y-axis limits
+        plt.xlim(full_df["miles driven per capita"].min(), full_df["miles driven per capita"].max())
+        plt.ylim(full_df["inflation adjusted gas price"].min(), full_df["inflation adjusted gas price"].max())
+
+        # Annotate each point with the year
+        for i in range(df.shape[0]):
+            plt.text(
+                df["miles driven per capita"].iloc[i],
+                df["inflation adjusted gas price"].iloc[i],
+                df["year"].iloc[i],
+                fontsize=9,
+                ha='right'
+            )
+
+        # Show the plot
+        plt.xlabel("Miles Driven Per Capita")
+        plt.ylabel("Inflation Adjusted Gas Price")
+        plt.title("Scatter Plot of Miles Driven Per Capita vs Inflation Adjusted Gas Price")
+        plt.show()
+
+    draw_connected_scatter_plot(
+        miles_driven_per_capita_and_gas_price[
+            miles_driven_per_capita_and_gas_price.year <= max_year.value
+        ], 
+        miles_driven_per_capita_and_gas_price
+    )
+    return draw_connected_scatter_plot,
+
+
+@app.cell
+def __(miles_driven_per_capita_and_gas_price, mo):
+    max_year = mo.ui.slider(
+        start=miles_driven_per_capita_and_gas_price.year.min(),
+        stop=miles_driven_per_capita_and_gas_price.year.max(),
+    )
+
+    max_year
+    return max_year,
 
 
 @app.cell

@@ -126,5 +126,21 @@ def __(miles_driven_per_capita_and_gas_price):
     return xlim, ylim
 
 
+@app.cell
+def __():
+    # for export to the web
+    # miles_driven_per_capita_and_gas_price[['year', 'miles driven per capita', 'inflation adjusted gas price']].rename(columns={
+    #     'miles driven per capita': 'milesDriven',
+    #     'inflation adjusted gas price': 'gasPriceInflationAdjusted'
+    # }
+    #                                                                                                                 ).to_json(orient='records')
+    return
+
+
+@app.cell
+def __():
+    return
+
+
 if __name__ == "__main__":
     app.run()

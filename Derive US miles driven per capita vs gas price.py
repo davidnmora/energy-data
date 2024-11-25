@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.8.0"
+__generated_with = "0.9.23"
 app = marimo.App(width="medium", app_title="US miles driven per capital")
 
 
@@ -26,7 +26,7 @@ def __(miles_driven_per_capita_and_gas_price, mo):
         {max_year}
         """
     )
-    return max_year,
+    return (max_year,)
 
 
 @app.cell
@@ -213,7 +213,7 @@ def __(pd):
 
     by_year_1936_1995 = pd.DataFrame(_rows, columns=['year', 'vmt'])
     by_year_1936_1995
-    return by_year_1936_1995,
+    return (by_year_1936_1995,)
 
 
 @app.cell
@@ -228,7 +228,7 @@ def __(pd):
         # [2000, 2746925] # check overlap
     ]
     by_year_1995_2000 = pd.DataFrame(_hand_copied, columns=['year', 'vmt'])
-    return by_year_1995_2000,
+    return (by_year_1995_2000,)
 
 
 @app.cell
@@ -273,18 +273,16 @@ def __(
     plt.title("Vehicle Miles Traveled Over Time")
     sns.lineplot(data=miles_driven_all_years, x='year', y='vmt')
     sns.lineplot(data=miles_driven_all_years, x='year', y='vmt')
-    return miles_driven_all_years,
+    return (miles_driven_all_years,)
 
 
 @app.cell
 def __(mo):
     mo.md(
         r"""
-        # B. US population by year (NOTE: population is in thousands)
+        # B. US population by year
 
-        There's a lot of sources, not too many complete ones.
-
-        [I used St Lous Fed](https://fred.stlouisfed.org/graph/?id=B230RC0A052NBEA,) to pull full 1936-2023 range.
+        Source is [GapMinder](https://www.gapminder.org/data/) (v8 release), with all countries covered from 1800-present. (Thank you Rosling family!)
         """
     )
     return
@@ -292,11 +290,10 @@ def __(mo):
 
 @app.cell
 def __(pd):
-    annual_population = pd.read_csv("https://raw.githubusercontent.com/davidnmora/energy-data/main/data/us_annual_population_1936_2023.csv")
-    annual_population['year'] = annual_population['date'].apply(lambda x: int(x.split('-')[0]))
+    annual_population = pd.read_csv("data/us_annual_population_1800_2023_from_gapminder_v8.csv")
     annual_population = annual_population[['year', 'population']]
     annual_population
-    return annual_population,
+    return (annual_population,)
 
 
 @app.cell
@@ -330,7 +327,7 @@ def __(mo):
 def __(pd):
     gas_price_1929_2015 = pd.read_csv("https://raw.githubusercontent.com/davidnmora/energy-data/main/data/US%20Average%20Annual%20Gasoline%20Pump%20Price%2C%201929%20-%202015.csv")
     gas_price_1929_2015
-    return gas_price_1929_2015,
+    return (gas_price_1929_2015,)
 
 
 @app.cell
@@ -338,7 +335,7 @@ def __(pd):
     gas_price_1994_2023 = pd.read_csv('https://raw.githubusercontent.com/davidnmora/energy-data/main/data/U.S._All_Grades_All_Formulations_Retail_Gasoline_Prices.csv').rename(columns={"Year": "year"})
     gas_price_1994_2023['year'] = gas_price_1994_2023['year'].apply(lambda year: int(year))
     gas_price_1994_2023
-    return gas_price_1994_2023,
+    return (gas_price_1994_2023,)
 
 
 @app.cell
@@ -359,7 +356,7 @@ def __(gas_price_1929_2015, gas_price_1994_2023, pd):
 
     gas_price_1929_2023.plot(x='year', y='unajusted retail gas price')
     gas_price_1929_2023
-    return gas_price_1929_2023,
+    return (gas_price_1929_2023,)
 
 
 @app.cell
@@ -403,13 +400,13 @@ def __(
         how="inner"
     )
 
-    # NOTE: vmt is in millions, and popuation is in thousands, so to get actual value we can just multiply the quotient by 1,000
-    miles_driven_per_capita_and_gas_price['miles driven per capita'] = 1000 * miles_driven_per_capita_and_gas_price['vmt'] / miles_driven_per_capita_and_gas_price['population']
+    # NOTE: vmt is in millions, and popuation is just the actual value, so multiply by 1 million:
+    miles_driven_per_capita_and_gas_price['miles driven per capita'] = 1000000 * miles_driven_per_capita_and_gas_price['vmt'] / miles_driven_per_capita_and_gas_price['population']
 
 
     miles_driven_per_capita_and_gas_price = miles_driven_per_capita_and_gas_price.sort_values(by="year") # required for viz
     miles_driven_per_capita_and_gas_price
-    return miles_driven_per_capita_and_gas_price,
+    return (miles_driven_per_capita_and_gas_price,)
 
 
 @app.cell

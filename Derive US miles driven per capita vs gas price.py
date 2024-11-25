@@ -398,7 +398,13 @@ def __(gas_price_1929_2023):
     })
 
     inflation_adjusted_gas_price['inflation adjusted gas price'] = inflation_adjusted_gas_price.apply(
-        lambda row: cpi.inflate(round(row['raw gas price'], 2), int(row['year'])),
+        lambda row: round(
+            cpi.inflate(
+                round(row['raw gas price'], 2), 
+                int(row['year'])
+            ),
+            2
+        ),
         axis=1
     )
 
@@ -429,7 +435,7 @@ def __(
     )
 
     # NOTE: vmt is in millions, and popuation is just the actual value, so multiply by 1 million:
-    miles_driven_per_capita_and_gas_price['miles driven per capita'] = 1000000 * miles_driven_per_capita_and_gas_price['vmt'] / miles_driven_per_capita_and_gas_price['population']
+    miles_driven_per_capita_and_gas_price['miles driven per capita'] = round(1000000 * miles_driven_per_capita_and_gas_price['vmt'] / miles_driven_per_capita_and_gas_price['population'])
 
 
     miles_driven_per_capita_and_gas_price = miles_driven_per_capita_and_gas_price.sort_values(by="year") # required for viz
@@ -438,8 +444,13 @@ def __(
 
 
 @app.cell
+def __(miles_driven_per_capita_and_gas_price):
+    miles_driven_per_capita_and_gas_price.to_csv('data/derived-data/miles_driven_per_capita_and_gas_price.csv', index=False)
+    return
+
+
+@app.cell
 def __():
-    # miles_driven_per_capita_and_gas_price.to_csv('data/derived-data/miles_driven_per_capita_and_gas_price.csv', index=False)
     return
 
 

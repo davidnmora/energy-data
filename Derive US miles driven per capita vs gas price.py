@@ -129,16 +129,27 @@ def __(mo):
     mo.md(
         """
         # A. Total miles driven each year in the US
-        ## We'll need to pull data from 3 sources to get the maximum spread (1936 - 2023)
+        ## We'll need to pull data from *sigh* 4 sources to get the maximum spread (1936 - 2023)
 
+        - 1924 - 1935 I found and hande-pasted from [US Department of Transportation website](https://www.fhwa.dot.gov/policyinformation/statistics/2007/vmt421.cfm). It's the 
         - [1936 - 1995 PDF report](https://www.fhwa.dot.gov/ohim/summary95/vm201a.pdf). FIELD: "All Motor Vehicles => A. Total Travel"
         - "Report Archive 1992-2002" found on [this page under "archive"](https://www.fhwa.dot.gov/policyinformation/travel_monitoring/tvt.cfm). FIELD: "All Systems => Year"
         - (from the same FHWA page) 2000 - May 2024 by month is available if you download the `24maytvt.xlsx => subsheet: SAVMPT`. FIELD: we can simply aggregate `vmt` column by year, excluding 2024 which is not a complete year.
 
-        ### NOTE: `vmt` ("vehicle miles traveled") is always in millions (so multiply by 1,000,000 to get actual value)
+        ### NOTE: `vmt` ("vehicle miles traveled") is always in millions
         """
     )
     return
+
+
+@app.cell
+def __(pd):
+    gas_price_and_vmt_by_year_1924_1935 = pd.read_csv(
+        "data/US gas price, vehicle miles traveled VMT 1924-1935.csv"
+    )
+    by_year_1924_1935 = gas_price_and_vmt_by_year_1924_1935[["year", "vmt"]]
+    by_year_1924_1935
+    return by_year_1924_1935, gas_price_and_vmt_by_year_1924_1935
 
 
 @app.cell
@@ -252,6 +263,7 @@ def __(pd):
 
 @app.cell
 def __(
+    by_year_1924_1935,
     by_year_1936_1995,
     by_year_1995_2000,
     by_year_2000_2023,
@@ -261,7 +273,7 @@ def __(
 ):
     # Concat all 3 dataframes
 
-    miles_driven_all_years = pd.concat([by_year_1936_1995, by_year_1995_2000, by_year_2000_2023])
+    miles_driven_all_years = pd.concat([by_year_1924_1935, by_year_1936_1995, by_year_1995_2000, by_year_2000_2023])
     miles_driven_all_years['year'] = miles_driven_all_years.year.apply(lambda year: int(year))
 
     # make a time series chart using sns

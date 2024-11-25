@@ -321,6 +321,7 @@ def __(mo):
 
         ### Data sources available
 
+        - USED: 1924 - (technically) 1935, though I'll only use through 1928, cuz I found the data on a [sorta-reputable-but-not-really website, InflationData.com](https://inflationdata.com/articles/inflation-adjusted-prices/inflation-adjusted-gasoline-prices/). It claims it got the data from the expected US government sources, but I didn't have the patience to track down those sources (they weren't immediately easy to find). So here we are. It's just 5 years... 🤷
         - USED: [1929-2015 "Average Historical Annual Gasoline Pump Price" excel spreadsheet](https://www.energy.gov/eere/vehicles/articles/fact-915-march-7-2016-average-historical-annual-gasoline-pump-price-1929): energy.gov published a fun little "fact" report, which weirdly seems to be the easiest place to cleanly get this big range of annual data.
         - USED: [1994-2023 "U.S. All Grades All Formulations Retail Gasoline Prices"](https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=pet&s=emm_epm0_pte_nus_dpg&f=a): from the Energy Information Administration website. DOUBT: do we really want *all formulations* mushed together? I feel like that's not exactly "gasoline pump price", is it?
         - DISCARDED (the other one slightly better matched the 1929-2015 overlap, so we went with it) [1992 - 2023 "Regular conventional gasoline prices"](https://www.eia.gov/petroleum/gasdiesel/): comes straight from eia.gov data portal... so, better?
@@ -337,8 +338,22 @@ def __(mo):
 
 @app.cell
 def __(pd):
+    gas_price_1924_1928 = pd.read_csv(
+            "data/US gas price, vehicle miles traveled VMT 1924-1935.csv"
+        )[['year', 'gas_price']].rename(
+            columns={"gas_price": "unajusted retail gas price"}
+        )
+    gas_price_1924_1928 = gas_price_1924_1928[
+        gas_price_1924_1928.year <= 1928
+    ]
+
+    gas_price_1924_1928
+    return (gas_price_1924_1928,)
+
+
+@app.cell
+def __(pd):
     gas_price_1929_2015 = pd.read_csv("https://raw.githubusercontent.com/davidnmora/energy-data/main/data/US%20Average%20Annual%20Gasoline%20Pump%20Price%2C%201929%20-%202015.csv")
-    gas_price_1929_2015
     return (gas_price_1929_2015,)
 
 
@@ -357,8 +372,9 @@ def __(mo):
 
 
 @app.cell
-def __(gas_price_1929_2015, gas_price_1994_2023, pd):
+def __(gas_price_1924_1928, gas_price_1929_2015, gas_price_1994_2023, pd):
     gas_price_1929_2023 = pd.concat([
+        gas_price_1924_1928,
         gas_price_1929_2015,
         gas_price_1994_2023[
             (gas_price_1994_2023.year > 2015) &

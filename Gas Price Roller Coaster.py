@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.8.0"
+__generated_with = "0.9.23"
 app = marimo.App(width="medium", app_title="Gas price roller coaster")
 
 
@@ -40,29 +40,31 @@ def __(mo):
 
 @app.cell
 def __(pd):
-    miles_driven_per_capita_and_gas_price = pd.read_csv('https://raw.githubusercontent.com/davidnmora/energy-data/main/data/derived-data/miles_driven_per_capita_and_gas_price.csv')
-    return miles_driven_per_capita_and_gas_price,
+    miles_driven_per_capita_and_gas_price = pd.read_csv('data/derived-data/miles_driven_per_capita_and_gas_price.csv')
+
+    miles_driven_per_capita_and_gas_price
+    return (miles_driven_per_capita_and_gas_price,)
 
 
 @app.cell
 def __(miles_driven_per_capita_and_gas_price, mo):
-    max_year = mo.ui.range_slider.from_series(miles_driven_per_capita_and_gas_price.year, full_width=True)
+    range_slider = mo.ui.range_slider.from_series(miles_driven_per_capita_and_gas_price.year, full_width=True)
 
     mo.md(
         f"""
-        # Filter within the time range: 1936 - 2023
-        {max_year}
+        # Filter within the time range: 1924 - 2023
+        {range_slider}
         """
     )
-    return max_year,
+    return (range_slider,)
 
 
 @app.cell
 def __(
     functools,
-    max_year,
     miles_driven_per_capita_and_gas_price,
     plt,
+    range_slider,
     sns,
     xlim,
     ylim,
@@ -115,7 +117,7 @@ def __(
         return plt.gca()
 
 
-    draw_connected_scatter_plot(max_year.value[0], max_year.value[1])
+    draw_connected_scatter_plot(range_slider.value[0], range_slider.value[1])
     return draw_connected_scatter_plot, format_year
 
 

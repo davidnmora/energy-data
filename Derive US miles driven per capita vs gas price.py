@@ -131,7 +131,7 @@ def __(mo):
         # A. Total miles driven each year in the US
         ## We'll need to pull data from *sigh* 4 sources to get the maximum spread (1936 - 2023)
 
-        - 1924 - 1935 I found and hande-pasted from [US Department of Transportation website](https://www.fhwa.dot.gov/policyinformation/statistics/2007/vmt421.cfm). It's the 
+        - 1924 - 1935 I found and hande-pasted from [US Department of Transportation website](https://www.fhwa.dot.gov/policyinformation/statistics/2007/vmt421.cfm). (In terms of editing the CSV, can find the file on [Goolge Drive (Google Sheets)](https://docs.google.com/spreadsheets/d/1m0My22WHKVMAst7pmQkVNMrqZ1i3bGojKT0raGesTyw/edit?gid=0#gid=0) along with population and price)
         - [1936 - 1995 PDF report](https://www.fhwa.dot.gov/ohim/summary95/vm201a.pdf). FIELD: "All Motor Vehicles => A. Total Travel"
         - "Report Archive 1992-2002" found on [this page under "archive"](https://www.fhwa.dot.gov/policyinformation/travel_monitoring/tvt.cfm). FIELD: "All Systems => Year"
         - (from the same [FHWA page](https://www.fhwa.dot.gov/policyinformation/travel_monitoring/tvt.cfm)) 2000 - 2024 by month is available if you download the `24[MONTH]tvt.xlsx => subsheet: SAVMPT`. FIELD: we can simply aggregate `vmt` column by year, excluding 2024 which is not a complete year.
@@ -253,10 +253,6 @@ def __(pd):
 
     by_year_2000_2024 = by_month_2000_2024.groupby('year').agg({'vmt': 'sum'}).reset_index()
 
-    by_year_2000_2024 = by_year_2000_2024[
-            by_year_2000_2024['year'].apply(lambda x: int(x)) < 2024
-    ]
-
     by_year_2000_2024
     return by_month_2000_2024, by_year_2000_2024
 
@@ -294,7 +290,7 @@ def __(mo):
         r"""
         # B. US population by year
 
-        Source is [GapMinder](https://www.gapminder.org/data/) (v8 release), with all countries covered from 1800-present. (Thank you Rosling family!)
+        Source is [GapMinder](https://www.gapminder.org/data/) (v8 release), with all countries covered from 1800-present and then some predictions (I've just used through 2024). *Thank you Rosling family!*
         """
     )
     return
@@ -323,7 +319,7 @@ def __(mo):
 
         - USED: 1924 - (technically) 1935, though I'll only use through 1928, cuz I found the data on a [sorta-reputable-but-not-really website, InflationData.com](https://inflationdata.com/articles/inflation-adjusted-prices/inflation-adjusted-gasoline-prices/). It claims it got the data from the expected US government sources, but I didn't have the patience to track down those sources (they weren't immediately easy to find). So here we are. It's just 5 years... 🤷
         - USED: [1929-2015 "Average Historical Annual Gasoline Pump Price" excel spreadsheet](https://www.energy.gov/eere/vehicles/articles/fact-915-march-7-2016-average-historical-annual-gasoline-pump-price-1929): energy.gov published a fun little "fact" report, which weirdly seems to be the easiest place to cleanly get this big range of annual data.
-        - USED: [1994-2023 "U.S. All Grades All Formulations Retail Gasoline Prices"](https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=pet&s=emm_epm0_pte_nus_dpg&f=a): from the Energy Information Administration website. DOUBT: do we really want *all formulations* mushed together? I feel like that's not exactly "gasoline pump price", is it?
+        - USED: [1994-2023 "U.S. All Grades All Formulations Retail Gasoline Prices"](https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=pet&s=emm_epm0_pte_nus_dpg&f=a): from the Energy Information Administration website. DOUBT: do we really want *all formulations* mushed together? I feel like that's not exactly "gasoline pump price", is it? (Note that 2024 year I hand calculated by just averaging the Months Jan-Nov 2024 on the website (fastest way to add 2024 without rewriting code to read monthly))
         - DISCARDED (the other one slightly better matched the 1929-2015 overlap, so we went with it) [1992 - 2023 "Regular conventional gasoline prices"](https://www.eia.gov/petroleum/gasdiesel/): comes straight from eia.gov data portal... so, better?
         """
     )
@@ -359,10 +355,10 @@ def __(pd):
 
 @app.cell
 def __(pd):
-    gas_price_1994_2023 = pd.read_csv('https://raw.githubusercontent.com/davidnmora/energy-data/main/data/U.S._All_Grades_All_Formulations_Retail_Gasoline_Prices.csv').rename(columns={"Year": "year"})
-    gas_price_1994_2023['year'] = gas_price_1994_2023['year'].apply(lambda year: int(year))
-    gas_price_1994_2023
-    return (gas_price_1994_2023,)
+    gas_price_1994_2024 = pd.read_csv('data/U.S._All_Grades_All_Formulations_Retail_Gasoline_Prices.csv').rename(columns={"Year": "year"})
+    gas_price_1994_2024['year'] = gas_price_1994_2024['year'].apply(lambda year: int(year))
+    gas_price_1994_2024
+    return (gas_price_1994_2024,)
 
 
 @app.cell
@@ -372,36 +368,43 @@ def __(mo):
 
 
 @app.cell
-def __(gas_price_1924_1928, gas_price_1929_2015, gas_price_1994_2023, pd):
-    gas_price_1929_2023 = pd.concat([
+def __(gas_price_1924_1928, gas_price_1929_2015, gas_price_1994_2024, pd):
+    gas_price_1929_2024 = pd.concat([
         gas_price_1924_1928,
         gas_price_1929_2015,
-        gas_price_1994_2023[
-            (gas_price_1994_2023.year > 2015) &
-            (gas_price_1994_2023.year < 2024) # not a full year
+        gas_price_1994_2024[
+            gas_price_1994_2024.year > 2015
         ].rename(columns={'All Grades All Formulations Retail Gasoline Price': 'unajusted retail gas price'})
-    ])
+    ]).sort_values(by=['year'])
 
-    gas_price_1929_2023.plot(x='year', y='unajusted retail gas price')
-    gas_price_1929_2023
-    return (gas_price_1929_2023,)
+    gas_price_1929_2024.plot(x='year', y='unajusted retail gas price')
+    gas_price_1929_2024
+    return (gas_price_1929_2024,)
 
 
 @app.cell
-def __(gas_price_1929_2023):
+def __(gas_price_1929_2024):
+    from datetime import date
+
     import cpi
 
     cpi.inflate(100, 1913)
 
-    inflation_adjusted_gas_price = gas_price_1929_2023.copy().rename(columns={
+    inflation_adjusted_gas_price = gas_price_1929_2024.copy().rename(columns={
         'unajusted retail gas price': 'raw gas price',
     })
+
+    def get_year(raw_year):
+        # latest at the time of coding this
+        if raw_year > 2023:
+            return date(2024, 10, 1)
+        return int(raw_year)
 
     inflation_adjusted_gas_price['inflation adjusted gas price'] = inflation_adjusted_gas_price.apply(
         lambda row: round(
             cpi.inflate(
                 round(row['raw gas price'], 2), 
-                int(row['year'])
+                get_year(row['year'])
             ),
             2
         ),
@@ -409,7 +412,7 @@ def __(gas_price_1929_2023):
     )
 
     inflation_adjusted_gas_price.plot(x='year', y=['raw gas price', 'inflation adjusted gas price'])
-    return cpi, inflation_adjusted_gas_price
+    return cpi, date, get_year, inflation_adjusted_gas_price
 
 
 @app.cell

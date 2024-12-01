@@ -134,7 +134,7 @@ def __(mo):
         - 1924 - 1935 I found and hande-pasted from [US Department of Transportation website](https://www.fhwa.dot.gov/policyinformation/statistics/2007/vmt421.cfm). (In terms of editing the CSV, can find the file on [Goolge Drive (Google Sheets)](https://docs.google.com/spreadsheets/d/1m0My22WHKVMAst7pmQkVNMrqZ1i3bGojKT0raGesTyw/edit?gid=0#gid=0) along with population and price)
         - [1936 - 1995 PDF report](https://www.fhwa.dot.gov/ohim/summary95/vm201a.pdf). FIELD: "All Motor Vehicles => A. Total Travel"
         - "Report Archive 1992-2002" found on [this page under "archive"](https://www.fhwa.dot.gov/policyinformation/travel_monitoring/tvt.cfm). FIELD: "All Systems => Year"
-        - (from the same [FHWA page](https://www.fhwa.dot.gov/policyinformation/travel_monitoring/tvt.cfm)) 2000 - 2024 by month is available if you download the `24[MONTH]tvt.xlsx => subsheet: SAVMPT`. FIELD: we can simply aggregate `vmt` column by year, excluding 2024 which is not a complete year.
+        - (from the same [FHWA page](https://www.fhwa.dot.gov/policyinformation/travel_monitoring/tvt.cfm)) 2000 - 2024 by month is available if you download the `24[MONTH]tvt.xlsx => subsheet: SAVMPT`. FIELD: we can simply aggregate `vmt` column by year. Since, at the time of coding, 2024 is not a complete year, we can put a best guess using the data we do have.
 
         ### NOTE: `vmt` ("vehicle miles traveled") is always in millions
         """
@@ -254,7 +254,39 @@ def __(pd):
     by_year_2000_2024 = by_month_2000_2024.groupby('year').agg({'vmt': 'sum'}).reset_index()
 
     by_year_2000_2024
-    return by_month_2000_2024, by_year_2000_2024
+
+    # Fix 2024, which is incomplete
+
+    months_available_for_2024 = by_month_2000_2024[
+        by_month_2000_2024.obs_date.str.endswith('-24')
+    ]
+
+    avg_2024 = months_available_for_2024.agg({'vmt': 'mean'}).iloc[0]
+
+    avg_2024
+
+    missing_months = 12 - len(months_available_for_2024)
+    best_guess_at_missing_miles = missing_months * avg_2024
+
+    existing_value = by_year_2000_2024.iloc[-1].vmt
+
+    best_guess_2024 = int(existing_value + best_guess_at_missing_miles)
+
+
+    # Manually mutate 2024
+    by_year_2000_2024.at[len(by_year_2000_2024) - 1, "vmt"] = best_guess_2024
+
+    by_year_2000_2024
+    return (
+        avg_2024,
+        best_guess_2024,
+        best_guess_at_missing_miles,
+        by_month_2000_2024,
+        by_year_2000_2024,
+        existing_value,
+        missing_months,
+        months_available_for_2024,
+    )
 
 
 @app.cell

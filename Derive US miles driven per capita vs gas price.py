@@ -134,7 +134,7 @@ def __(mo):
         - 1924 - 1935 I found and hande-pasted from [US Department of Transportation website](https://www.fhwa.dot.gov/policyinformation/statistics/2007/vmt421.cfm). It's the 
         - [1936 - 1995 PDF report](https://www.fhwa.dot.gov/ohim/summary95/vm201a.pdf). FIELD: "All Motor Vehicles => A. Total Travel"
         - "Report Archive 1992-2002" found on [this page under "archive"](https://www.fhwa.dot.gov/policyinformation/travel_monitoring/tvt.cfm). FIELD: "All Systems => Year"
-        - (from the same FHWA page) 2000 - May 2024 by month is available if you download the `24maytvt.xlsx => subsheet: SAVMPT`. FIELD: we can simply aggregate `vmt` column by year, excluding 2024 which is not a complete year.
+        - (from the same [FHWA page](https://www.fhwa.dot.gov/policyinformation/travel_monitoring/tvt.cfm)) 2000 - 2024 by month is available if you download the `24[MONTH]tvt.xlsx => subsheet: SAVMPT`. FIELD: we can simply aggregate `vmt` column by year, excluding 2024 which is not a complete year.
 
         ### NOTE: `vmt` ("vehicle miles traveled") is always in millions
         """
@@ -245,20 +245,20 @@ def __(pd):
 @app.cell
 def __(pd):
     by_month_2000_2024 = pd.read_csv(
-        'https://raw.githubusercontent.com/davidnmora/energy-data/main/data/Vehicle%20miles%20traveled%202000-May%202024%20--%20fhwa%20-%2024maytvt%20%3E%20SAVMT.csv',
+        'data/Vehicle miles traveled 2000-2024 -- fhwa - 24septvt > SAVMT.csv',
         thousands=','
     )
 
     by_month_2000_2024['year'] = by_month_2000_2024['obs_date'].apply(lambda x: '20' + x.split('-')[1])
 
-    by_year_2000_2023 = by_month_2000_2024.groupby('year').agg({'vmt': 'sum'}).reset_index()
+    by_year_2000_2024 = by_month_2000_2024.groupby('year').agg({'vmt': 'sum'}).reset_index()
 
-    by_year_2000_2023 = by_year_2000_2023[
-            by_year_2000_2023['year'].apply(lambda x: int(x)) < 2024
+    by_year_2000_2024 = by_year_2000_2024[
+            by_year_2000_2024['year'].apply(lambda x: int(x)) < 2024
     ]
 
-    by_year_2000_2023
-    return by_month_2000_2024, by_year_2000_2023
+    by_year_2000_2024
+    return by_month_2000_2024, by_year_2000_2024
 
 
 @app.cell
@@ -266,14 +266,14 @@ def __(
     by_year_1924_1935,
     by_year_1936_1995,
     by_year_1995_2000,
-    by_year_2000_2023,
+    by_year_2000_2024,
     pd,
     plt,
     sns,
 ):
     # Concat all 3 dataframes
 
-    miles_driven_all_years = pd.concat([by_year_1924_1935, by_year_1936_1995, by_year_1995_2000, by_year_2000_2023])
+    miles_driven_all_years = pd.concat([by_year_1924_1935, by_year_1936_1995, by_year_1995_2000, by_year_2000_2024])
     miles_driven_all_years['year'] = miles_driven_all_years.year.apply(lambda year: int(year))
 
     # make a time series chart using sns
